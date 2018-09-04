@@ -3,6 +3,7 @@
 import os
 import sys
 import requests
+import time
 
 host = '.'.join(os.environ['CERTBOT_DOMAIN'].split('.')[:-2])
 if host.startswith('*'):
@@ -46,6 +47,7 @@ def auth():
 	glesys.post('domain', 'addrecord', {
 		'domainname': domain, 'host': acme_host, 'type': 'TXT', 'data': validation
 	})
+	time.sleep(25)
 
 def cleanup():
 	r = glesys.post('domain', 'listrecords', { 'domainname': domain })
