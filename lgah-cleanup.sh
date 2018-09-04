@@ -1,4 +1,5 @@
 #!/bin/bash
 
-source .env
+cd "$(dirname "$0")"
+export $(grep -v '^#' .env | xargs -d '\n')
 exec python3 lgah.py cleanup

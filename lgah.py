@@ -1,14 +1,19 @@
-#!/bin/python3
+#!/usr/bin/python3
 
+import os
 import sys
+import requests
 
-host = '_acme_challenge.' + '.'.join(sys.environ['CERTBOT_DOMAIN'].split('.')[:-2])
-domain = '.'.join(sys.environ['CERTBOT_DOMAIN'].split('.')[-2:])
-
+host = '.'.join(os.environ['CERTBOT_DOMAIN'].split('.')[:-2])
+if host.startswith('*'):
+	acme_host = '_acme_challenge' + host[1:]
+else:
+	acme_host = '_acme_challenge.' + host
+domain = '.'.join(os.environ['CERTBOT_DOMAIN'].split('.')[-2:])
 
 class GlesysRest(object):
-    username = sys.environ['GLESYS_USERNAME']
-    api_key = sys.environ['GLESYS_API_KEY']
+    username = os.environ['GLESYS_USERNAME']
+    api_key = os.environ['GLESYS_API_KEY']
     scheme = 'https://'
     base_url = 'api.glesys.com'
     format = 'json'
@@ -37,21 +42,23 @@ class GlesysRest(object):
 glesys = GlesysRest()
 
 def auth():
-	validation = sys.environ['CERTBOT_VALIDATION']
+	validation = os.environ['CERTBOT_VALIDATION']
 	glesys.post('domain', 'addrecord', {
-		'domain': domain, 'host': host, 'type': 'TXT', 'data': validation
+		'domainname': domain, 'host': acme_host, 'type': 'TXT', 'data': validation
 	})
 
 def cleanup():
-	result = glesys.post('domain', 'listrecords', { 'domainname': domain })
-	for record in result['records']:
-		if record['host'] == host:
+	r = glesys.post('domain', 'listrecords', { 'domainname': domain })
+	for record in r.json()['response']['records']:
+		if record['host'] == acme_host:
+			record_id = record['recordid']
 			glesys.post('domain', 'deleterecord', {
                 		'recordid': record_id
 		        })
+			break
 
 
-if __name__ == "main":
+if __name__ == "__main__":
 	if sys.argv[1] == 'auth':
 		auth()
 	elif sys.argv[1] == 'cleanup':
