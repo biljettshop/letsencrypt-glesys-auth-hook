@@ -50,7 +50,7 @@ def auth():
 def cleanup():
 	r = glesys.post('domain', 'listrecords', { 'domainname': domain })
 	for record in r.json()['response']['records']:
-		if record['host'] == acme_host:
+		if record['host'] == acme_host and record['type'] == 'TXT':
 			record_id = record['recordid']
 			glesys.post('domain', 'deleterecord', {
                 		'recordid': record_id
